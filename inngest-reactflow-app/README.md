@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Workflow (React Flow + Inngest)
+
+A visual AI workflow builder. Each node in the graph is an AI decision step
+that prompts an LLM and gets back `YES` or `NO`, then branches to the next
+node along the matching edge. The graph is edited visually with React Flow;
+execution runs as an Inngest function, one step per node.
+
+## Stack
+
+- [Next.js](https://nextjs.org) (App Router)
+- [React Flow](https://reactflow.dev) (`@xyflow/react`) — the visual editor
+- [Inngest](https://www.inngest.com) — durable step-based workflow execution
+- [OpenAI SDK](https://github.com/openai/openai-node) — LLM calls for each decision node
+- [shadcn/ui](https://ui.shadcn.com) — UI components
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
+
+```bash
+npm install
+```
+
+Copy the environment file and fill in your OpenAI key:
+
+```bash
+cp .env.example .env.local
+```
+
+Run the Next.js dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+In a separate terminal, run the Inngest dev server so workflow functions can
+execute locally:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx inngest-cli@latest dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) for the app and
+[http://localhost:8288](http://localhost:8288) for the Inngest dashboard.
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+See `.env.example`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `OPENAI_API_KEY` — required, used to call the LLM for each decision node
+- `INNGEST_EVENT_KEY` / `INNGEST_SIGNING_KEY` — only needed when deploying;
+  not required for local development against the Inngest Dev Server
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project structure
 
-## Deploy on Vercel
+```
+app/                Next.js routes (UI + API handlers, incl. the Inngest endpoint)
+components/ui/       shadcn/ui components
+lib/                 Shared utilities (e.g. cn())
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## How it works
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Build a graph in the React Flow canvas: add decision nodes, write a
+   prompt for each, and connect them with `YES` / `NO` edges.
+2. Running the workflow sends an event to Inngest, which executes one step
+   per node: the node's prompt is sent to the LLM, constrained to answer
+   only `YES` or `NO`.
+3. Based on the answer, execution follows the matching outgoing edge to the
+   next node, and so on until a node has no matching outgoing edge.
