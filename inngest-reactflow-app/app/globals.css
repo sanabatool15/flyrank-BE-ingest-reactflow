@@ -1,5 +1,9 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+/* Vendored instead of imported from the package: Turbopack fails to
+   resolve tw-animate-css's package-export "style" condition on some
+   Windows setups even when the file is genuinely installed. A relative
+   import sidesteps node_modules resolution entirely. */
+@import "./vendor/tw-animate.css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
